@@ -72,7 +72,7 @@ Servo roll_servo;
 MPU6050 mpu;
 bfs::Ubx gnss(&Serial2);
 
-const int pin_roll_servo = 20;
+const int pin_roll_servo = 21;
 const int relay_pin = 25;
 
 bool _relay_state = false;

@@ -36,6 +36,8 @@ void setup() {
 }
 
 void loop() {
+//  Serial.println(gnss.Read());
+//  Serial.println("-------------");
   if(gnss.Read()) {
     Serial.print(gnss.fix());
     Serial.print("\t");

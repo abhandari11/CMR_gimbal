@@ -1,13 +1,13 @@
 #include <Servo.h>
 
 Servo myServo;
-int servo_pin = 20;
+int servo_pin = 41;
 
 void setup() {
   Serial.begin(38400);
   myServo.attach(servo_pin);
   Serial.print("Centering the servos...");
-  myServo.write(130);
+  myServo.write(90);
   
   Serial.println("Enter an angle.");
 }

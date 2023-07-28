@@ -457,8 +457,8 @@ void get_target_roll_angle() {
   // current normal distance from the line-of-interest
   float current_distance_from_line = current_pos.distance_from_origin * sin(current_pos.deviation_from_line * d2r);
 
-  // required roll angle based on normal distance and height
-  target_roll_angle = r2d * atan2(current_distance_from_line, closest_rel_height);
+  // Constant roll angle of 0
+  target_roll_angle = 0;
   
   target_roll_angle = max(min_roll_angle, min(target_roll_angle, max_roll_angle)); 
  
@@ -480,13 +480,8 @@ void get_target_roll_angle() {
 void get_target_pitch_angle() {
   // required roll angle based on normal distance and height
 
-  // if statement to test pitch controller's performance
-//  if (millis() - step_prev_time < 20000){
+  // Constant pitch angle of 0
     target_pitch_angle = 0;
-//  }
-//  else {
-//    target_pitch_angle = 25;
-//  }
 
   if (_DEBUG) { 
     Serial.println("-----------------------");
