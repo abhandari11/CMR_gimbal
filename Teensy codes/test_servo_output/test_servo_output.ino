@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 Servo myServo;
-int servo_pin = 41;
+int servo_pin = 21;
 
 void setup() {
   Serial.begin(38400);

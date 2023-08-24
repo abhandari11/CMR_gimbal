@@ -82,7 +82,7 @@ int result;
 
 // Depending on what is needed to be actuated.
 // Set 0 for pitch and 1 for roll;
-int tester = 1;
+int tester = 0;
 
 // This reads the get_IMU_state function below in real time and controls the servo.
 void loop() {  

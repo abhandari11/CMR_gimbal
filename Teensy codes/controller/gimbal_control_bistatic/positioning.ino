@@ -10,13 +10,21 @@ void load_survey_points() {
   // Coordinates of the first point (first Point-of-interest)
   // Set as Origin
   // 0, 1
-  gnd_points[0].latitude = 33.193911;
-  gnd_points[0].longitude = -87.481588;
+  // Arboretum
+  gnd_points[0].latitude = 33.1938106;
+  gnd_points[0].longitude = -87.4815271;
+  // SERC QUAD
+//  gnd_points[0].latitude = 33.1936187;
+//  gnd_points[0].longitude = -87.543306;
   gnd_points[0].altitude = 0;
-  
+
   // Second Point (Any point perpendicular to the CMR flight path)
+  // Arboretum
   gnd_points[1].latitude = 33.193790;
-  gnd_points[1].longitude = -87.481585;
+  gnd_points[1].longitude = -87.4815466;
+  // SERC QUAD
+//  gnd_points[1].latitude = 33.215101;
+//  gnd_points[1].longitude = -87.543098;
   gnd_points[1].altitude = 0;  
 
   // Third Survey Point

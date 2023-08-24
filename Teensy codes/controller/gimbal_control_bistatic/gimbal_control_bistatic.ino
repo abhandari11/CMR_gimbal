@@ -17,6 +17,7 @@
 // set this to true if you need to see serial monitor's output. Needs computer plugged in. 
 // Set this to false for normal operation
 bool _DEBUG = false;
+
 // Transformation complete, goes from stow state to operation in less gitters. 
 bool trans_comp = false; 
 
@@ -34,10 +35,10 @@ float stow_angle = 15;
 
 // Range of servo movements 
 // Manually check the range of mounted antenna at the max and min angles. Use a phone level.  
-float max_roll_angle = 75;
-float min_roll_angle = -75;
-float max_pitch_angle = 30;
-float min_pitch_angle = -30;
+float max_roll_angle = 66;
+float min_roll_angle = -69;
+float max_pitch_angle = 25;
+float min_pitch_angle = -26;
 
 // delay between timesteps for servo to goto a new positions
 float servo_delay = 10;
@@ -272,11 +273,11 @@ void setup() {
 //**********************************************************************************//
 //**********************************************************************************//
 void loop() {
-  // To debug this code, turn line 276 to open and comment out line 277
-  // Turn line 280 to < 0 instead of 3 and comment out all of 290 to 302
+  // To debug this code, turn line 279 to open and comment out line 280
+  // Turn line 283 to > 0 instead of 2 and comment out all of 293 to 305
   
   // reading the relay signal from Ardupilot
-  //int relay_cmd = 1; 
+  // int relay_cmd = 1; 
   int relay_cmd = digitalRead(relay_pin);
   
   // if there is new data and it has a good fix
@@ -302,6 +303,9 @@ void loop() {
     Serial.print("\t");
     Serial.print(gnss.alt_wgs84_m(), 2);
     Serial.print("\n");
+//    roll_servo.write(_servo_center_angle);;
+//    pitch_servo.write(_servo_center_angle);;
+//    _servo_centered = true; 
   }
 
   // Logic to take care of relay fluctuations. Check for consistency for certain iterations 
@@ -327,6 +331,13 @@ void loop() {
     _state_counter = 0;
     _relay_state = !_relay_state;
     }
+    
+if (_DEBUG) {
+    Serial.print("Relay Command: ");
+    Serial.println(_relay_state);
+    Serial.print("GNSS Fix: ");
+    Serial.print(gnss.fix());
+  }
 
   // check the closest relative height at certain intervals 
   if ((millis() - last_height_checked_time) > HEIGHT_CHECK_PERIOD_MS) {
@@ -340,6 +351,7 @@ void loop() {
 
   // if the relay state is ON
   if (_relay_state) {
+    
     if (!trans_comp){
       roll_servo.write(_servo_center_angle);;
       pitch_servo.write(_servo_center_angle);;
@@ -395,8 +407,13 @@ void loop() {
       _servo_centered = true;
       trans_comp = false;
       } 
-    }
-  
+
+    else {
+      roll_servo.write(_servo_center_angle);
+      _servo_centered = true; 
+      }
+   }
+      
   // Write data to SD Card periodically 
   if (new_file_created && (millis() - last_sd_write_time > SD_CARD_PERIOD_MS)){
     File file = SD.open(file_name.c_str(),FILE_WRITE);
@@ -406,7 +423,8 @@ void loop() {
       String data_string = String(gnss.utc_year())+","+String(gnss.utc_month())+","+String(gnss.utc_day())+","+
       String(gnss.utc_hour())+","+String(gnss.utc_min())+","+String(gnss.utc_sec())+","+String(gnss.utc_nano())+","+
       String(gnss.lat_deg(),7)+","+String(gnss.lon_deg(),7)+","+String(target_roll_angle,2)+","+String(ypr[2],2)+","+
-      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(cum_error_pitch,2);
+      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(cum_error_roll,2)+","+String(gnss.fix(),2)+","+
+      String(_relay_state,2);
       file.println(data_string.c_str());
       file.close();
       }
