@@ -27,16 +27,16 @@ float Ki = 0.0;
 
 // Check with the servo test code. Manually test what servo.write() cmds correspond to the max and min angles. 
 float _servo_center_angle = 90;
-float servo_roll_max = 15;
-float servo_roll_min = 165;
+float servo_roll_max = 8;
+float servo_roll_min = 168;
 float servo_pitch_max = 60;
 float servo_pitch_min = 120;
 float stow_angle = 15;
 
 // Range of servo movements 
 // Manually check the range of mounted antenna at the max and min angles. Use a phone level.  
-float max_roll_angle = 66;
-float min_roll_angle = -69;
+float max_roll_angle = 73;
+float min_roll_angle = -73;
 float max_pitch_angle = 25;
 float min_pitch_angle = -26;
 
@@ -423,8 +423,7 @@ if (_DEBUG) {
       String data_string = String(gnss.utc_year())+","+String(gnss.utc_month())+","+String(gnss.utc_day())+","+
       String(gnss.utc_hour())+","+String(gnss.utc_min())+","+String(gnss.utc_sec())+","+String(gnss.utc_nano())+","+
       String(gnss.lat_deg(),7)+","+String(gnss.lon_deg(),7)+","+String(target_roll_angle,2)+","+String(ypr[2],2)+","+
-      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(cum_error_roll,2)+","+String(gnss.fix(),2)+","+
-      String(_relay_state,2);
+      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(gnss.fix(),2)+","+String(_relay_state,2)+","+String(current_distance_from_line)+";
       file.println(data_string.c_str());
       file.close();
       }

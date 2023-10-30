@@ -5,6 +5,8 @@
   #include "Wire.h"
 #endif
 
+// Change line 87 to test roll or pitch.
+
 // Library being read from
 MPU6050 mpu;
 Servo rollServo;
@@ -12,8 +14,8 @@ Servo pitchServo;
 int rollservo_pin = 41;
 int pitchservo_pin = 21;
 
-float rollServo_max = 15;
-float rollServo_min = 165;
+float rollServo_max = 9;
+float rollServo_min = 168;
 float pitchServo_max = 60;
 float pitchServo_min = 120;
 
@@ -82,7 +84,7 @@ int result;
 
 // Depending on what is needed to be actuated.
 // Set 0 for pitch and 1 for roll;
-int tester = 0;
+int tester = 1;
 
 // This reads the get_IMU_state function below in real time and controls the servo.
 void loop() {  
