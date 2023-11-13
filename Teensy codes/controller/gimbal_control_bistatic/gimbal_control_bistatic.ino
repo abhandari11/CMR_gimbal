@@ -130,6 +130,7 @@ float cum_error_roll;
 float cum_error_pitch;
 float control_roll_out;
 float control_pitch_out;
+float current_distance_from_line;
 
 // time related global variables
 unsigned long last_height_checked_time;
@@ -279,6 +280,9 @@ void loop() {
   // reading the relay signal from Ardupilot
   // int relay_cmd = 1; 
   int relay_cmd = digitalRead(relay_pin);
+
+  Serial.print("GNSS fix type.. ");
+  Serial.println(gnss.fix());
   
   // if there is new data and it has a good fix
   if (gnss.Read() && (gnss.fix() > 2)) {
@@ -303,9 +307,9 @@ void loop() {
     Serial.print("\t");
     Serial.print(gnss.alt_wgs84_m(), 2);
     Serial.print("\n");
-//    roll_servo.write(_servo_center_angle);;
-//    pitch_servo.write(_servo_center_angle);;
-//    _servo_centered = true; 
+////    roll_servo.write(_servo_center_angle);;
+////    pitch_servo.write(_servo_center_angle);;
+////    _servo_centered = true; 
   }
 
   // Logic to take care of relay fluctuations. Check for consistency for certain iterations 
@@ -423,7 +427,7 @@ if (_DEBUG) {
       String data_string = String(gnss.utc_year())+","+String(gnss.utc_month())+","+String(gnss.utc_day())+","+
       String(gnss.utc_hour())+","+String(gnss.utc_min())+","+String(gnss.utc_sec())+","+String(gnss.utc_nano())+","+
       String(gnss.lat_deg(),7)+","+String(gnss.lon_deg(),7)+","+String(target_roll_angle,2)+","+String(ypr[2],2)+","+
-      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(gnss.fix(),2)+","+String(_relay_state,2)+","+String(current_distance_from_line)+";
+      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(gnss.fix(),2)+","+String(_relay_state,2)+","+String(current_distance_from_line);
       file.println(data_string.c_str());
       file.close();
       }
