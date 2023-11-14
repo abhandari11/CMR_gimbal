@@ -32,7 +32,7 @@ void setup() {
   /* Serial to display data */
   Serial.begin(115200);
   while(!Serial) {}
-  gnss.Begin(115200);
+  gnss.Begin(38400);
 }
 
 void loop() {

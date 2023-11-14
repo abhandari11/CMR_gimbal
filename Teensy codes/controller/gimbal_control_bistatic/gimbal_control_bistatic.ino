@@ -16,7 +16,7 @@
 
 // set this to true if you need to see serial monitor's output. Needs computer plugged in. 
 // Set this to false for normal operation
-bool _DEBUG = false;
+bool _DEBUG = false ;
 
 // Transformation complete, goes from stow state to operation in less gitters. 
 bool trans_comp = false; 
@@ -27,7 +27,7 @@ float Ki = 0.0;
 
 // Check with the servo test code. Manually test what servo.write() cmds correspond to the max and min angles. 
 float _servo_center_angle = 90;
-float servo_roll_max = 8;
+float servo_roll_max = 9;
 float servo_roll_min = 168;
 float servo_pitch_max = 60;
 float servo_pitch_min = 120;
@@ -36,7 +36,7 @@ float stow_angle = 15;
 // Range of servo movements 
 // Manually check the range of mounted antenna at the max and min angles. Use a phone level.  
 float max_roll_angle = 73;
-float min_roll_angle = -73;
+float min_roll_angle = -75;
 float max_pitch_angle = 25;
 float min_pitch_angle = -26;
 
@@ -46,7 +46,7 @@ float servo_delay = 10;
 float max_angular_rate = 500;
 
 // gnss baud rate 
-int _gnss_baud = 115200;
+int _gnss_baud = 38400;
 
 // update rate: 10 millisecond
 const int16_t LOOP_PERIOD_MS = 10;
@@ -144,7 +144,7 @@ void setup() {
   if (_DEBUG){
     while(!Serial) {}
   }
-  gnss.Begin(115200);
+  gnss.Begin(_gnss_baud);
 
   // setting the digital relay switch from Ardupilot Relay
   pinMode(relay_pin, INPUT);
@@ -274,19 +274,34 @@ void setup() {
 //**********************************************************************************//
 //**********************************************************************************//
 void loop() {
-  // To debug this code, turn line 279 to open and comment out line 280
-  // Turn line 283 to > 0 instead of 2 and comment out all of 293 to 305
-  
+int relay_cmd = digitalRead(relay_pin);
+if (_DEBUG) {  
   // reading the relay signal from Ardupilot
-  // int relay_cmd = 1; 
-  int relay_cmd = digitalRead(relay_pin);
-
-  Serial.print("GNSS fix type.. ");
-  Serial.println(gnss.fix());
+  relay_cmd = 1;  
   
   // if there is new data and it has a good fix
-  if (gnss.Read() && (gnss.fix() > 2)) {
-
+  if (gnss.Read() && (gnss.fix() > 0)) {
+    Serial.print("GNSS fix type.. ");
+    Serial.println(gnss.fix());
+    
+    // get current position and calculate the target gimbal roll angle every frame
+    Serial.println("Calling position.......");
+    get_current_pos();
+    get_target_roll_angle();
+    get_target_pitch_angle();
+    }
+    
+   if (gnss.fix() < 3){
+    Serial.print("GNSS Fix: ");
+    Serial.print(gnss.fix());
+    Serial.print("Relay Command: ");
+    Serial.println(_relay_state);
+    }
+ else {
+   if (gnss.Read() && (gnss.fix() > 2)) {
+    Serial.print("GNSS fix type.. ");
+    Serial.println(gnss.fix());
+    
     // get current position and calculate the target gimbal roll angle every frame
     Serial.println("Calling position.......");
     get_current_pos();
@@ -294,7 +309,7 @@ void loop() {
     get_target_pitch_angle();
     }
 
-  // This step can take up to 10 minutes.
+ // This step can take up to 10 minutes.
   else if (gnss.fix() < 3){
     Serial.println("Waiting for GNSS fix.");
     Serial.print(gnss.fix());
@@ -307,10 +322,9 @@ void loop() {
     Serial.print("\t");
     Serial.print(gnss.alt_wgs84_m(), 2);
     Serial.print("\n");
-////    roll_servo.write(_servo_center_angle);;
-////    pitch_servo.write(_servo_center_angle);;
-////    _servo_centered = true; 
   }
+ }
+}
 
   // Logic to take care of relay fluctuations. Check for consistency for certain iterations 
   if (!_relay_state) {
@@ -335,13 +349,6 @@ void loop() {
     _state_counter = 0;
     _relay_state = !_relay_state;
     }
-    
-if (_DEBUG) {
-    Serial.print("Relay Command: ");
-    Serial.println(_relay_state);
-    Serial.print("GNSS Fix: ");
-    Serial.print(gnss.fix());
-  }
 
   // check the closest relative height at certain intervals 
   if ((millis() - last_height_checked_time) > HEIGHT_CHECK_PERIOD_MS) {
