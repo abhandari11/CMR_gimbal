@@ -274,10 +274,11 @@ void setup() {
 //**********************************************************************************//
 //**********************************************************************************//
 void loop() {
-int relay_cmd = digitalRead(relay_pin);
-if (_DEBUG) {  
-  // reading the relay signal from Ardupilot
-  relay_cmd = 1;  
+ 
+  int relay_cmd = digitalRead(relay_pin);
+  if (_DEBUG) {  
+    // reading the relay signal from Ardupilot
+    relay_cmd = 1;  
   
   // if there is new data and it has a good fix
   if (gnss.Read() && (gnss.fix() > 0)) {
@@ -297,6 +298,7 @@ if (_DEBUG) {
     Serial.print("Relay Command: ");
     Serial.println(_relay_state);
     }
+}
  else {
    if (gnss.Read() && (gnss.fix() > 2)) {
     Serial.print("GNSS fix type.. ");
@@ -309,22 +311,23 @@ if (_DEBUG) {
     get_target_pitch_angle();
     }
 
- // This step can take up to 10 minutes.
-  else if (gnss.fix() < 3){
-    Serial.println("Waiting for GNSS fix.");
-    Serial.print(gnss.fix());
-    Serial.print("\t");
-    Serial.print(gnss.num_sv());
-    Serial.print("\t");
-    Serial.print(gnss.lat_deg(), 6);
-    Serial.print("\t");
-    Serial.print(gnss.lon_deg(), 6);
-    Serial.print("\t");
-    Serial.print(gnss.alt_wgs84_m(), 2);
-    Serial.print("\n");
-  }
+  // This step can take up to 10 minutes.
+    else if (gnss.fix() < 3){
+      Serial.println("Waiting for GNSS fix.");
+      Serial.print(gnss.fix());
+      Serial.print("\t");
+      Serial.print(gnss.num_sv());
+      Serial.print("\t");
+      Serial.print(gnss.lat_deg(), 6);
+      Serial.print("\t");
+      Serial.print(gnss.lon_deg(), 6);
+      Serial.print("\t");
+      +
+      Serial.print(gnss.alt_wgs84_m(), 2);
+      Serial.print("\n");
+    }
  }
-}
+
 
   // Logic to take care of relay fluctuations. Check for consistency for certain iterations 
   if (!_relay_state) {
@@ -350,12 +353,9 @@ if (_DEBUG) {
     _relay_state = !_relay_state;
     }
 
-  // check the closest relative height at certain intervals 
-  if ((millis() - last_height_checked_time) > HEIGHT_CHECK_PERIOD_MS) {
-    Serial.println("Checking for the next closest point");
-    get_closest_relative_height();
-    last_height_checked_time = millis();
-    }
+
+  // calling the height of the point in every step (CHANGE THIS LATER)
+  get_closest_relative_height();
 
   // do nothing if there's no data on IMU
   if (!dmpReady) return;
