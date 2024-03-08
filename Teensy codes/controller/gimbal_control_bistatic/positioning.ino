@@ -10,9 +10,11 @@ void load_survey_points() {
   // Coordinates of the first point (first Point-of-interest)
   // Set as Origin
   // 0, 1
+  gnd_points[0].latitude = 30.2710557;
+  gnd_points[0].longitude = -87.5696839;
   // Golf-course
-  gnd_points[0].latitude = 33.2961279;
-  gnd_points[0].longitude = -87.6396212;
+//  gnd_points[0].latitude = 33.2961279;
+//  gnd_points[0].longitude = -87.6396212;
   // Arboretum
 //  gnd_points[0].latitude = 33.1938106;
 //  gnd_points[0].longitude = -87.4815271;
@@ -22,9 +24,11 @@ void load_survey_points() {
   gnd_points[0].altitude = 0;
 
   // Second Point (Any point perpendicular to the CMR flight path)
+  gnd_points[1].latitude = 30.2709671;
+  gnd_points[1].longitude = -87.5696661;
   // Golf-course
-  gnd_points[1].latitude = 33.2962405;
-  gnd_points[1].longitude = -87.6396963;
+//  gnd_points[1].latitude = 33.2962405;
+//  gnd_points[1].longitude = -87.6396963;
   // Arboretum
 //  gnd_points[1].latitude = 33.193790;
 //  gnd_points[1].longitude = -87.4815466;
@@ -110,9 +114,7 @@ void get_current_pos(){
     Serial.print(current_pos.deviation_from_line);
     Serial.println("deg");
   }
-
 }
-
 
 void get_closest_relative_height() {
   // call this function at a certain predefined rate. 
@@ -122,7 +124,6 @@ void get_closest_relative_height() {
   // Currently just hardcoding a fixed value of 10m. 
   closest_rel_height = 10; 
   }
-
 
 static double get_distance(double lat1, double lon1, double lat2, double lon2) {
   // differences between lats and lons
@@ -137,7 +138,6 @@ static double get_distance(double lat1, double lon1, double lat2, double lon2) {
   double c = 2 * asin(sqrt(a));
   return radius * c;
 }
-
 
 static double get_bearing(double lat1, double lon1, double lat2, double lon2) {
   lat1 = lat1 * d2r;

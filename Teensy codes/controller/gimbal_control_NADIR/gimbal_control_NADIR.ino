@@ -1,6 +1,8 @@
 //
-// Line 137: Void Setup
-// Line 267: Void Loop
+// Line 142: Void Setup, creates limits for systems and tells the code what we want to use.
+// Line 278: Void Loop, runs the idea that we want everything to do.
+//
+// Issues usually occur with the GPS part of this (line 293), refer to void loop notes at beginning for debug fix.
 //
 #include <Servo.h>
 #include <MPU6050_6Axis_MotionApps20.h>
@@ -16,7 +18,8 @@
 
 // set this to true if you need to see serial monitor's output. Needs computer plugged in. 
 // Set this to false for normal operation
-bool _DEBUG = true;
+bool _DEBUG = false ;
+
 // Transformation complete, goes from stow state to operation in less gitters. 
 bool trans_comp = false; 
 
@@ -30,14 +33,14 @@ float servo_roll_max = 9;
 float servo_roll_min = 168;
 float servo_pitch_max = 60;
 float servo_pitch_min = 120;
-float stow_angle = 15;
+float stow_angle = -15;
 
 // Range of servo movements 
 // Manually check the range of mounted antenna at the max and min angles. Use a phone level.  
 float max_roll_angle = 73;
-float min_roll_angle = -73;
-float max_pitch_angle = 30;
-float min_pitch_angle = -30;
+float min_roll_angle = -75;
+float max_pitch_angle = 25;
+float min_pitch_angle = -26;
 
 // delay between timesteps for servo to goto a new positions
 float servo_delay = 10;
@@ -45,7 +48,7 @@ float servo_delay = 10;
 float max_angular_rate = 500;
 
 // gnss baud rate 
-int _gnss_baud = 115200;
+int _gnss_baud = 38400;
 
 // update rate: 10 millisecond
 const int16_t LOOP_PERIOD_MS = 10;
@@ -89,7 +92,6 @@ bool _relay_state = false;
 int _state_counter = 0;
 bool _servo_centered = false; 
 bool new_file_created = false;
-String file_prefix = "LOG";
 String file_name = "";
 
 // last time data was written in sd card
@@ -129,6 +131,7 @@ float cum_error_roll;
 float cum_error_pitch;
 float control_roll_out;
 float control_pitch_out;
+float current_distance_from_line;
 
 // time related global variables
 unsigned long last_height_checked_time;
@@ -142,7 +145,7 @@ void setup() {
   if (_DEBUG){
     while(!Serial) {}
   }
-  gnss.Begin(115200);
+  gnss.Begin(_gnss_baud);
 
   // setting the digital relay switch from Ardupilot Relay
   pinMode(relay_pin, INPUT);
@@ -233,11 +236,11 @@ void setup() {
   Serial.println("SD card initialized");
 
   uint8_t file_counter = 0;
-  file_name = file_prefix + String(file_counter) + ".txt";
+  file_name = String(file_counter) + ".txt";
   
   while (SD.exists(file_name.c_str())){
     file_counter++;
-    file_name = file_prefix + String(file_counter) + ".txt";
+    file_name = String(file_counter) + ".txt";
   }
   
   new_file_created = true;
@@ -271,17 +274,44 @@ void setup() {
 
 //**********************************************************************************//
 //**********************************************************************************//
+
+// For NADIR commands, refer to line 498 and 522 for roll and pitch. For Snow, roll = 0.
 void loop() {
-  // To debug this code, turn line 276 to open and comment out line 277
-  // Turn line 280 to < 0 instead of 3 and comment out all of 290 to 302
-  
-  // reading the relay signal from Ardupilot
-  int relay_cmd = 1; 
-//  int relay_cmd = digitalRead(relay_pin);
+
+ // I went through and made an edit for if you want to use debug mode or not. To 
+ // initiate debug mode, go to Line 21 and set it to True.
+ // For Nadir, the use of the GNSS should not be needed, but I don't know the repercussions
+ // of removing it.
+ 
+  int relay_cmd = digitalRead(relay_pin);
+  if (_DEBUG) {  
+    // reading the relay signal from Ardupilot
+    relay_cmd = 1;  
   
   // if there is new data and it has a good fix
-  if (gnss.Read() && (gnss.fix() < 0)) {
-
+  if (gnss.Read() && (gnss.fix() > 0)) {
+    Serial.print("GNSS fix type.. ");
+    Serial.println(gnss.fix());
+    
+    // get current position and calculate the target gimbal roll angle every frame
+    Serial.println("Calling position.......");
+    get_current_pos();
+    get_target_roll_angle();
+    get_target_pitch_angle();
+    }
+    
+   if (gnss.fix() < 3){
+    Serial.print("GNSS Fix: ");
+    Serial.print(gnss.fix());
+    Serial.print("Relay Command: ");
+    Serial.println(_relay_state);
+    }
+}
+ else {
+   if (gnss.Read() && (gnss.fix() > 2)) {
+    Serial.print("GNSS fix type.. ");
+    Serial.println(gnss.fix());
+    
     // get current position and calculate the target gimbal roll angle every frame
     Serial.println("Calling position.......");
     get_current_pos();
@@ -290,19 +320,20 @@ void loop() {
     }
 
   // This step can take up to 10 minutes.
-//  else if (gnss.fix() < 3){
-//    Serial.println("Waiting for GNSS fix.");
-//    Serial.print(gnss.fix());
-//    Serial.print("\t");
-//    Serial.print(gnss.num_sv());
-//    Serial.print("\t");
-//    Serial.print(gnss.lat_deg(), 6);
-//    Serial.print("\t");
-//    Serial.print(gnss.lon_deg(), 6);
-//    Serial.print("\t");
-//    Serial.print(gnss.alt_wgs84_m(), 2);
-//    Serial.print("\n");
-//  }
+    else if (gnss.fix() < 3){
+      Serial.println("Waiting for GNSS fix.");
+      Serial.print(gnss.fix());
+      Serial.print("\t");
+      Serial.print(gnss.num_sv());
+      Serial.print("\t");
+      Serial.print(gnss.lat_deg(), 6);
+      Serial.print("\t");
+      Serial.print(gnss.lon_deg(), 6);
+      Serial.print("\t");
+      Serial.print(gnss.alt_wgs84_m(), 2);
+      Serial.print("\n");
+    }
+ }
 
   // Logic to take care of relay fluctuations. Check for consistency for certain iterations 
   if (!_relay_state) {
@@ -328,18 +359,16 @@ void loop() {
     _relay_state = !_relay_state;
     }
 
-  // check the closest relative height at certain intervals 
-  if ((millis() - last_height_checked_time) > HEIGHT_CHECK_PERIOD_MS) {
-    Serial.println("Checking for the next closest point");
-    get_closest_relative_height();
-    last_height_checked_time = millis();
-    }
+
+  // calling the height of the point in every step (CHANGE THIS LATER)
+  get_closest_relative_height();
 
   // do nothing if there's no data on IMU
   if (!dmpReady) return;
 
   // if the relay state is ON
   if (_relay_state) {
+    
     if (!trans_comp){
       roll_servo.write(_servo_center_angle);;
       pitch_servo.write(_servo_center_angle);;
@@ -360,8 +389,6 @@ void loop() {
       }
 
     if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
-
-      get_IMU_state();
       
       // calculates target euler angles from target point's position vector
       get_target_roll_angle();
@@ -397,18 +424,28 @@ void loop() {
       _servo_centered = true;
       trans_comp = false;
       } 
-    }
-  
+
+    else {
+      roll_servo.write(_servo_center_angle);
+      _servo_centered = true; 
+      }
+   }
+      
   // Write data to SD Card periodically 
   if (new_file_created && (millis() - last_sd_write_time > SD_CARD_PERIOD_MS)){
+
+    String file_name = String(gnss.utc_day())+"/"+String(gnss.utc_month())+"/"+String(gnss.utc_year())+"_"+
+                       String(gnss.utc_hour())+":"+String(gnss.utc_min())+":"+String(gnss.utc_sec());
+    
     File file = SD.open(file_name.c_str(),FILE_WRITE);
     last_sd_write_time = millis();
     if (file){
       file.seek(EOF);
       String data_string = String(gnss.utc_year())+","+String(gnss.utc_month())+","+String(gnss.utc_day())+","+
       String(gnss.utc_hour())+","+String(gnss.utc_min())+","+String(gnss.utc_sec())+","+String(gnss.utc_nano())+","+
-      String(gnss.lat_deg(),7)+","+String(gnss.lon_deg(),7)+","+String(target_roll_angle,2)+","+String(ypr[2],2)+","+
-      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(cum_error_pitch,2);
+      String(gnss.lat_deg(),7)+","+String(gnss.lon_deg(),7)+","+String(gnss.alt_wgs84_m(),5)+","+String(target_roll_angle,2)
+      +","+String(ypr[2],2)+","+String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(gnss.fix(),2)+","+
+      String(_relay_state,2)+","+String(current_distance_from_line);
       file.println(data_string.c_str());
       file.close();
       }
@@ -457,15 +494,12 @@ float get_gimbal_state_pitch(){
 //**********************************************************************************//
 void get_target_roll_angle() {
   // current normal distance from the line-of-interest
-  float current_distance_from_line = current_pos.distance_from_origin * sin(current_pos.deviation_from_line * d2r);
+  float current_distance_from_line = current_pos.distance_from_origin * sin(current_pos.deviation_from_line * d2r); // Bistatic logic
 
-  // Constant roll angle of 0
-  target_roll_angle = 73;
-  
-//  target_roll_angle = max(min_roll_angle, min(target_roll_angle, max_roll_angle)); 
+  // required roll angle based on normal distance and height
+  target_roll_angle = 0;
  
-
-  if (_DEBUG) {
+  if (_DEBUG) { // Bitstatic Logic
     Serial.println("-----------------------");
     Serial.print("Current distance from line:: ");
     Serial.print(current_distance_from_line);
@@ -480,10 +514,15 @@ void get_target_roll_angle() {
 
 //**********************************************************************************//
 void get_target_pitch_angle() {
-  // required roll angle based on normal distance and height
+  // required pitch angle based on normal distance and height
 
-  // Constant pitch angle of 0
-    target_pitch_angle = 0;
+  // if statement to test pitch controller's performance
+//  if (millis() - step_prev_time < 20000){
+    target_pitch_angle = 0; // Always 0
+//  }
+//  else {
+//    target_pitch_angle = 25; // Dummy stow variable
+//  }
 
   if (_DEBUG) { 
     Serial.println("-----------------------");
@@ -700,20 +739,3 @@ void write_to_servo_pitch(float control_pitch_out){
   last_servo_cmd_pitch = servo_cmd_pitch;
   _servo_centered = false;
 }  
-//**********************************************************************************//
-void get_IMU_state(){
- if (_DEBUG) {
-  mpu.dmpGetQuaternion(&q, fifoBuffer);
-  mpu.dmpGetEuler(euler, &q);
-
-// Print out the values
-  Serial.print("Rotation X: ");
-  Serial.println(r2d * euler[2]);
-  Serial.print("Rotation Y: ");
-  Serial.println(r2d * euler[1]);
-  Serial.print("Rotation Z: ");
-  Serial.println(r2d * euler[0]);
-
-  Serial.println("---------------------");
- }
-}

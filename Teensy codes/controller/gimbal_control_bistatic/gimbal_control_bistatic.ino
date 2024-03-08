@@ -1,6 +1,8 @@
 //
-// Line 137: Void Setup
-// Line 267: Void Loop
+// Line 142: Void Setup, creates limits for systems and tells the code what we want to use.
+// Line 278: Void Loop, runs the idea that we want everything to do.
+//
+// Issues usually occur with the GPS part of this (line 293), refer to void loop notes at beginning for debug fix.
 //
 #include <Servo.h>
 #include <MPU6050_6Axis_MotionApps20.h>
@@ -31,7 +33,7 @@ float servo_roll_max = 9;
 float servo_roll_min = 168;
 float servo_pitch_max = 60;
 float servo_pitch_min = 120;
-float stow_angle = 15;
+float stow_angle = -15;
 
 // Range of servo movements 
 // Manually check the range of mounted antenna at the max and min angles. Use a phone level.  
@@ -90,7 +92,6 @@ bool _relay_state = false;
 int _state_counter = 0;
 bool _servo_centered = false; 
 bool new_file_created = false;
-String file_prefix = "LOG";
 String file_name = "";
 
 // last time data was written in sd card
@@ -235,11 +236,11 @@ void setup() {
   Serial.println("SD card initialized");
 
   uint8_t file_counter = 0;
-  file_name = file_prefix + String(file_counter) + ".txt";
+  file_name = String(file_counter) + ".txt";
   
   while (SD.exists(file_name.c_str())){
     file_counter++;
-    file_name = file_prefix + String(file_counter) + ".txt";
+    file_name = String(file_counter) + ".txt";
   }
   
   new_file_created = true;
@@ -274,7 +275,15 @@ void setup() {
 //**********************************************************************************//
 //**********************************************************************************//
 void loop() {
+
+ // I went through and made an edit for if you want to use debug mode or not. To 
+ // initiate debug mode, go to Line 21 and set it to True.
  
+ if (gnss.fix() < 3){ // Across whole loop, stow unless fix.
+    pitch_servo.write(stow_angle);
+ }
+ 
+ else {
   int relay_cmd = digitalRead(relay_pin);
   if (_DEBUG) {  
     // reading the relay signal from Ardupilot
@@ -300,7 +309,7 @@ void loop() {
     }
 }
  else {
-   if (gnss.Read() && (gnss.fix() > 2)) {
+   if (gnss.Read() && (gnss.fix() > 1)) {
     Serial.print("GNSS fix type.. ");
     Serial.println(gnss.fix());
     
@@ -312,7 +321,7 @@ void loop() {
     }
 
   // This step can take up to 10 minutes.
-    else if (gnss.fix() < 3){
+    else if (gnss.fix() < 2){
       Serial.println("Waiting for GNSS fix.");
       Serial.print(gnss.fix());
       Serial.print("\t");
@@ -322,12 +331,10 @@ void loop() {
       Serial.print("\t");
       Serial.print(gnss.lon_deg(), 6);
       Serial.print("\t");
-      +
       Serial.print(gnss.alt_wgs84_m(), 2);
       Serial.print("\n");
     }
  }
-
 
   // Logic to take care of relay fluctuations. Check for consistency for certain iterations 
   if (!_relay_state) {
@@ -427,14 +434,19 @@ void loop() {
       
   // Write data to SD Card periodically 
   if (new_file_created && (millis() - last_sd_write_time > SD_CARD_PERIOD_MS)){
+
+    String file_name = String(gnss.utc_day())+"/"+String(gnss.utc_month())+"/"+String(gnss.utc_year())+"_"+
+                       String(gnss.utc_hour())+":"+String(gnss.utc_min())+":"+String(gnss.utc_sec());
+    
     File file = SD.open(file_name.c_str(),FILE_WRITE);
     last_sd_write_time = millis();
     if (file){
       file.seek(EOF);
       String data_string = String(gnss.utc_year())+","+String(gnss.utc_month())+","+String(gnss.utc_day())+","+
       String(gnss.utc_hour())+","+String(gnss.utc_min())+","+String(gnss.utc_sec())+","+String(gnss.utc_nano())+","+
-      String(gnss.lat_deg(),7)+","+String(gnss.lon_deg(),7)+","+String(target_roll_angle,2)+","+String(ypr[2],2)+","+
-      String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(gnss.fix(),2)+","+String(_relay_state,2)+","+String(current_distance_from_line);
+      String(gnss.lat_deg(),7)+","+String(gnss.lon_deg(),7)+","+String(gnss.alt_wgs84_m(),5)+","+String(target_roll_angle,2)
+      +","+String(ypr[2],2)+","+String(target_pitch_angle,2)+","+String(ypr[1],2)+","+String(gnss.fix(),2)+","+
+      String(_relay_state,2)+","+String(current_distance_from_line);
       file.println(data_string.c_str());
       file.close();
       }
@@ -443,7 +455,7 @@ void loop() {
       }
     }
   }
-
+}
 //**********************************************************************************//
 float get_gimbal_state_roll(){
   // Based on the MPU_6050 library example

@@ -1,4 +1,5 @@
 // Code related to positioning stuff
+// Only useful for Bistatic, I cannot think of a use for NADIR, but we keep it.
 
 void load_survey_points() {
 
@@ -10,13 +11,31 @@ void load_survey_points() {
   // Coordinates of the first point (first Point-of-interest)
   // Set as Origin
   // 0, 1
-  gnd_points[0].latitude = 33.193911;
-  gnd_points[0].longitude = -87.481588;
+  gnd_points[0].latitude = 30.2771265;
+  gnd_points[0].longitude = -87.5341724;
+  // Golf-course
+//  gnd_points[0].latitude = 33.2961279;
+//  gnd_points[0].longitude = -87.6396212;
+  // Arboretum
+//  gnd_points[0].latitude = 33.1938106;
+//  gnd_points[0].longitude = -87.4815271;
+  // SERC QUAD
+//  gnd_points[0].latitude = 33.215120;
+//  gnd_points[0].longitude = -87.543326;
   gnd_points[0].altitude = 0;
-  
+
   // Second Point (Any point perpendicular to the CMR flight path)
-  gnd_points[1].latitude = 33.193790;
-  gnd_points[1].longitude = -87.481585;
+  gnd_points[1].latitude = 30.2770382;
+  gnd_points[1].longitude = -87.5341542;
+  // Golf-course
+//  gnd_points[1].latitude = 33.2962405;
+//  gnd_points[1].longitude = -87.6396963;
+  // Arboretum
+//  gnd_points[1].latitude = 33.193790;
+//  gnd_points[1].longitude = -87.4815466;
+  // SERC QUAD
+//  gnd_points[1].latitude = 33.215101;
+//  gnd_points[1].longitude = -87.543098;
   gnd_points[1].altitude = 0;  
 
   // Third Survey Point
@@ -106,7 +125,7 @@ void get_closest_relative_height() {
   // TODO: Figure out a way to do this for a large area. 
 
   // Currently just hardcoding a fixed value of 10m. 
-  closest_rel_height = 10; 
+  closest_rel_height = 7; 
   }
 
 
