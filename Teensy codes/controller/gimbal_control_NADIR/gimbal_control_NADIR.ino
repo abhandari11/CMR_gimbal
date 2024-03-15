@@ -18,7 +18,7 @@
 
 // set this to true if you need to see serial monitor's output. Needs computer plugged in. 
 // Set this to false for normal operation
-bool _DEBUG = false ;
+bool _DEBUG = false;
 
 // Transformation complete, goes from stow state to operation in less gitters. 
 bool trans_comp = false; 
@@ -33,7 +33,7 @@ float servo_roll_max = 9;
 float servo_roll_min = 168;
 float servo_pitch_max = 60;
 float servo_pitch_min = 120;
-float stow_angle = -15;
+float stow_angle = 30;
 
 // Range of servo movements 
 // Manually check the range of mounted antenna at the max and min angles. Use a phone level.  

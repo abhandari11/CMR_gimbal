@@ -281,47 +281,6 @@ void loop() {
  
  if (gnss.fix() < 3){ // Across whole loop, stow unless fix.
     pitch_servo.write(stow_angle);
- }
- 
- else {
-  int relay_cmd = digitalRead(relay_pin);
-  if (_DEBUG) {  
-    // reading the relay signal from Ardupilot
-    relay_cmd = 1;  
-  
-  // if there is new data and it has a good fix
-  if (gnss.Read() && (gnss.fix() > 0)) {
-    Serial.print("GNSS fix type.. ");
-    Serial.println(gnss.fix());
-    
-    // get current position and calculate the target gimbal roll angle every frame
-    Serial.println("Calling position.......");
-    get_current_pos();
-    get_target_roll_angle();
-    get_target_pitch_angle();
-    }
-    
-   if (gnss.fix() < 3){
-    Serial.print("GNSS Fix: ");
-    Serial.print(gnss.fix());
-    Serial.print("Relay Command: ");
-    Serial.println(_relay_state);
-    }
-}
- else {
-   if (gnss.Read() && (gnss.fix() > 1)) {
-    Serial.print("GNSS fix type.. ");
-    Serial.println(gnss.fix());
-    
-    // get current position and calculate the target gimbal roll angle every frame
-    Serial.println("Calling position.......");
-    get_current_pos();
-    get_target_roll_angle();
-    get_target_pitch_angle();
-    }
-
-  // This step can take up to 10 minutes.
-    else if (gnss.fix() < 2){
       Serial.println("Waiting for GNSS fix.");
       Serial.print(gnss.fix());
       Serial.print("\t");
@@ -333,7 +292,60 @@ void loop() {
       Serial.print("\t");
       Serial.print(gnss.alt_wgs84_m(), 2);
       Serial.print("\n");
+ }
+ 
+ else {
+  
+  int relay_cmd = digitalRead(relay_pin);
+  if (_DEBUG) {  
+    // reading the relay signal from Ardupilot
+    relay_cmd = 1;  
+  
+  // if there is new data and it has a good fix
+    if (gnss.Read() && (gnss.fix() > 0)) {
+    Serial.print("GNSS fix type.. ");
+    Serial.println(gnss.fix());
+    
+    // get current position and calculate the target gimbal roll angle every frame
+    Serial.println("Calling position.......");
+    get_current_pos();
+    get_target_roll_angle();
+    get_target_pitch_angle();
     }
+    
+    if (gnss.fix() < 3){
+    Serial.print("GNSS Fix: ");
+    Serial.print(gnss.fix());
+    Serial.print("Relay Command: ");
+    Serial.println(_relay_state);
+    }
+}
+ else {
+   if (gnss.Read() && (gnss.fix() > 2)) {
+    Serial.print("GNSS fix type.. ");
+    Serial.println(gnss.fix());
+    
+    // get current position and calculate the target gimbal roll angle every frame
+    Serial.println("Calling position.......");
+    get_current_pos();
+    get_target_roll_angle();
+    get_target_pitch_angle();
+    }
+
+  // This step can take up to 10 minutes.
+//    else if (gnss.fix() < 2){
+//      Serial.println("Waiting for GNSS fix.");
+//      Serial.print(gnss.fix());
+//      Serial.print("\t");
+//      Serial.print(gnss.num_sv());
+//      Serial.print("\t");
+//      Serial.print(gnss.lat_deg(), 6);
+//      Serial.print("\t");
+//      Serial.print(gnss.lon_deg(), 6);
+//      Serial.print("\t");
+//      Serial.print(gnss.alt_wgs84_m(), 2);
+//      Serial.print("\n");
+//    }
  }
 
   // Logic to take care of relay fluctuations. Check for consistency for certain iterations 
@@ -518,7 +530,7 @@ void get_target_roll_angle() {
 
 //**********************************************************************************//
 void get_target_pitch_angle() {
-  // required roll angle based on normal distance and height
+  // required pitch angle based on normal distance and height
 
   // if statement to test pitch controller's performance
 //  if (millis() - step_prev_time < 20000){
@@ -629,7 +641,7 @@ float calculate_servo_cmd_roll(float roll_cmd) {
 //**********************************************************************************//
 float calculate_servo_cmd_pitch(float pitch_cmd) {
   
-  // mapping from required roll angle to required servo angle. 
+  // mapping from required pitch angle to required servo angle. 
   float slope_pitch = -(servo_pitch_max - servo_pitch_min) / (max_pitch_angle);
   
   // saturate the calculated angle
@@ -730,7 +742,7 @@ void write_to_servo_roll(float control_roll_out){
 //**********************************************************************************//
 void write_to_servo_pitch(float control_pitch_out){
 
-  // mapping the required servo cmd based on roll angle cmd
+  // mapping the required servo cmd based on pitch angle cmd
   float servo_cmd_pitch = calculate_servo_cmd_pitch(control_pitch_out);
   
   if (_DEBUG) {

@@ -3,7 +3,7 @@
 Servo myServo;
 // pitch servo = 21
 // roll servo = 41
-int servo_pin = 41;
+int servo_pin = 21;
 
 void setup() {
   Serial.begin(38400);
